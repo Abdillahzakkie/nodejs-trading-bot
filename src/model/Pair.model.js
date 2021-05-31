@@ -12,6 +12,26 @@ const pairSchema = new mongoose.Schema({
     pair: {
         type: String,
         required: true
+    },
+    blockNumber: {
+        type: String,
+        required: true
+    },
+    transactionHash: {
+        type: String,
+        required: true
+    },
+    sortedOrder: {
+        type: Boolean,
+        required: true
+    },
+    reserve0: {
+        type: String,
+        required: true
+    },
+    reserve1: {
+        type: String,
+        required: true
     }
 }, {
     timestamps: true

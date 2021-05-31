@@ -13,11 +13,13 @@ const toChecksumAddress = _account => web3.utils.toChecksumAddress(_account);
 const getNewPairEvents = async () => {
     try {
         console.log("Fetching Pair Events");
-        const _startBlock = await web3.eth.getBlockNumber() - 10_000;
+        const _startBlock = await web3.eth.getBlockNumber() - 100;
         const _response = await uniswapV2Factory.getPastEvents('PairCreated', { fromBlock: _startBlock, toBlock: "latest" });
-        const _result = await filterNewPairEvents(_response);
-        // console.log(_result);
-        return _result;
+        const _filteredPairEvents = await filterNewPairEvents(_response);
+        const _pairReserves = await getPairReserves(_filteredPairEvents);
+        // save data to DB
+        await savePairToDB(_pairReserves);
+        // return _pairReserves;
     } catch (error) {
         console.log(error);
         return error;
@@ -37,18 +39,15 @@ const filterNewPairEvents = async _data => {
             ) return {};
 
             const _sortedOrder = sortedOrder(token1, WETH);
-
             return {
                 transactionHash,
                 blockNumber,
                 token0,
                 token1,
                 pair,
-                sortedOrder: _sortedOrder
+                sortedOrder: _sortedOrder,
             }
         })
-
-        await getReserves(pair);
         return _filteredData;
     } catch (error) {
         return error;
@@ -61,23 +60,42 @@ const sortedOrder = (token1, WETH) => {
     return false;
 }
 
-const getReserves = async _pairAddress => {
+const getPairReserves = async _data => {
     try {
-        const _uniswapV2Pair = new web3.eth.Contract(uniswapV2PairABI, _pairAddress);
-        console.log(_uniswapV2Pair);
-        const _result = await _uniswapV2Pair.methods.getReserves().call();
-        console.log(_result);
+        let _result = [];
+
+        for(let i = 0; i < _data.length; ++i) {
+            if(!_data[i].pair) return;
+            const _uniswapV2Pair = new web3.eth.Contract(uniswapV2PairABI, _data[i].pair);
+            const { _reserve0: reserve0, _reserve1: reserve1 } = await _uniswapV2Pair.methods.getReserves().call();
+            _result = [
+                ..._result, 
+                { 
+                    ..._data[i], 
+                    reserve0: parseFloat(fromWei(reserve0)).toFixed(4), 
+                    reserve1: parseFloat(fromWei(reserve1)).toFixed(4)
+                }
+            ];
+        }
         return _result;
     } catch (error) {
+        console.log(error);
         return error;
     }
 }
 
-const saveNewPair = async() => {
+const savePairToDB = async _data => {
     try {
-        // await new Pair.
+        _data.map(async item => {
+            const _newData = new Pair({ ...item });
+            console.log(_newData);
+            await _newData.save();
+        })
+        console.log(`Data saved successfully`);
+        // return _result;
     } catch (error) {
-        
+        console.log(error);
+        return error;
     }
 }
 
