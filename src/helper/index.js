@@ -5,6 +5,7 @@ const Pair = require('../model/Pair.model.js');
 const { abi : uniswapV2PairABI } = require('../web3/abis/uniswapV2Pair.json');
 
 
+const MINIMUM_LIQUIDITY = parseFloat(process.env.MINIMUM_LIQUIDITY);
 
 const toWei = _amount => web3.utils.toWei(_amount.toString(), 'ether');
 const fromWei = _amount => web3.utils.fromWei(_amount.toString(), 'ether');
