@@ -84,6 +84,8 @@ const getPairReserves = async _data => {
             if(!_data[i].pair) return;
             const _uniswapV2Pair = new web3.eth.Contract(uniswapV2PairABI, _data[i].pair);
             const { _reserve0: reserve0, _reserve1: reserve1 } = await _uniswapV2Pair.methods.getReserves().call();
+
+            if(_data[i].sortedOrder && parseFloat(fromWei(reserve1)) < MINIMUM_LIQUIDITY) continue;
             _result = [
                 ..._result, 
                 { 
