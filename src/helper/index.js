@@ -10,16 +10,31 @@ const toWei = _amount => web3.utils.toWei(_amount.toString(), 'ether');
 const fromWei = _amount => web3.utils.fromWei(_amount.toString(), 'ether');
 const toChecksumAddress = _account => web3.utils.toChecksumAddress(_account);
 
+const web3Subscribe = async () => {
+    try {
+        web3.eth.subscribe('newBlockHeaders')
+            .on('data', async block => {
+                console.log(`New block recieved. Block #${block.number}`);
+                await getNewPairEvents();
+            })
+            .on('error', console.log)
+
+    } catch (error) {
+        return error;
+    }
+}
+
 const getNewPairEvents = async () => {
     try {
         console.log("Fetching Pair Events");
-        const _startBlock = await web3.eth.getBlockNumber() - 100;
+        const _startBlock = await web3.eth.getBlockNumber() - 1000;
         const _response = await uniswapV2Factory.getPastEvents('PairCreated', { fromBlock: _startBlock, toBlock: "latest" });
         const _filteredPairEvents = await filterNewPairEvents(_response);
         const _pairReserves = await getPairReserves(_filteredPairEvents);
+        
         // save data to DB
         await savePairToDB(_pairReserves);
-        // return _pairReserves;
+        return _pairReserves;
     } catch (error) {
         console.log(error);
         return error;
@@ -87,12 +102,12 @@ const getPairReserves = async _data => {
 const savePairToDB = async _data => {
     try {
         _data.map(async item => {
+            const _validate = await Pair.findOne({ pair: item.pair });
+            if(_validate) return;
             const _newData = new Pair({ ...item });
-            console.log(_newData);
             await _newData.save();
+            console.log(`New Pair saved successfully`);
         })
-        console.log(`Data saved successfully`);
-        // return _result;
     } catch (error) {
         console.log(error);
         return error;
@@ -100,5 +115,6 @@ const savePairToDB = async _data => {
 }
 
 module.exports = {
+    web3Subscribe,
     getNewPairEvents
 }

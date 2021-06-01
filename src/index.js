@@ -1,7 +1,7 @@
 require('dotenv/config');
 const express = require('express');
 const { connectDB } = require('./DB');
-const { getNewPairEvents } = require('./helper');
+const { web3Subscribe } = require('./helper');
 
 const app = express();
 
@@ -11,5 +11,6 @@ app.use(express.json());
 app.listen(PORT, async () => {
     console.log(`Server listening on PORT: ${PORT}`);
     await connectDB();
-    await getNewPairEvents();
+    await web3Subscribe();
+    // await getNewPairEvents();
 })

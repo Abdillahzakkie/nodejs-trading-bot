@@ -32,6 +32,11 @@ const pairSchema = new mongoose.Schema({
     reserve1: {
         type: String,
         required: true
+    },
+    trade: {
+        type: Array,
+        required: false,
+        default: []
     }
 }, {
     timestamps: true
