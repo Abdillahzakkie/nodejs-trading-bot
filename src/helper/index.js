@@ -32,7 +32,6 @@ const getNewPairEvents = async () => {
         const _response = await uniswapV2Factory.getPastEvents('PairCreated', { fromBlock: _startBlock, toBlock: "latest" });
         const _filteredPairEvents = await filterNewPairEvents(_response);
         const _pairReserves = await getPairReserves(_filteredPairEvents);
-        
         // save data to DB
         await savePairToDB(_pairReserves);
         return _pairReserves;
@@ -81,7 +80,7 @@ const getPairReserves = async _data => {
         let _result = [];
 
         for(let i = 0; i < _data.length; ++i) {
-            if(!_data[i].pair) return;
+            if(!_data[i].pair) continue;
             const _uniswapV2Pair = new web3.eth.Contract(uniswapV2PairABI, _data[i].pair);
             const { _reserve0: reserve0, _reserve1: reserve1 } = await _uniswapV2Pair.methods.getReserves().call();
 
